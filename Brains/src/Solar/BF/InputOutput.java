@@ -23,6 +23,7 @@ public class InputOutput {
 	public byte read() throws IOException {
 		int buffered = input.length();
 
+		System.out.println(">");
 		// Infinite loop, if input stays empty.
 		while (buffered == 0) {
 			input.append(read.readLine());
@@ -40,6 +41,6 @@ public class InputOutput {
 	 */
 	public void print(byte memory) {
 		System.out.print((char) memory);
-		input.delete(0, input.length() - 1);
+		input.delete(0, input.length());
 	}
 }

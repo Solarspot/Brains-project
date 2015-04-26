@@ -27,45 +27,58 @@ public class BrainfuckSimple {
 	 */
 	public void run() throws IOException {
 		char instruction = ' ';
-
 		// Program returns when execution runs off the end.
 		while (command < programText.length()) {
 			instruction = programText.charAt(command);
+
+			// System.out.println("Running command: " + command);
 
 			switch (instruction) {
 			case '+': // BF increment command
 				memory[address]++;
 				command++;
 				break;
+
 			case '-': // Decrement command
 				memory[address]--;
 				command++;
 				break;
+
 			case '>': // Either of the change-address instructions could move
 						// beyond bounds of memory.
 				address++;
 				command++;
 				break;
+
 			case '<': // Pointer movement commands
-				address--;
+				address--;// Save
 				command++;
 				break;
 			case '.': // Print command
 				world.print(memory[address]);
 				command++;
 				break;
+
 			case ',': // Input command
 				memory[address] = world.read();
 				command++;
 				break;
+
 			case '[': // Brackets delimit blocks
 				openBracket();
 				break;
+
 			case ']':
 				closeBracket();
 				break;
-			// All other characters do nothing.
+
+			default:
+				command++;
+				// All other characters do nothing.
 			}
+
+			// System.out.println("Instruction " + instruction + "\nCell "
+			// + memory[address] + ", Address " + address);
 		}
 	}
 
@@ -106,7 +119,7 @@ public class BrainfuckSimple {
 		boolean found = false;
 		char instruction = programText.charAt(command);
 
-		if (memory[command] != 0) {
+		if (memory[address] != 0) {
 			// Enter block
 			command++;
 		} else {
