@@ -1,8 +1,6 @@
 package Solar.BF;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.LinkedList;
 
 /**
@@ -16,7 +14,7 @@ public class BrainfuckLight {
 	StringBuffer programText; // Brainfuck source code
 	private int programPointer;
 	private int programSize;
-	StringBuffer inputStream; /* What was I going to do with this?!?! */
+	private InputOutput world;
 	LinkedList<Byte> programStack; // Working data of program
 	private int stackPointer;
 	LinkedList<Integer> loopStarts; // [ text ], mark the
@@ -30,7 +28,7 @@ public class BrainfuckLight {
 	public BrainfuckLight() {
 		programText = new StringBuffer(50);
 		programSize = 0;
-		inputStream = new StringBuffer(20);
+		world = new InputOutput();
 		programStack = new LinkedList<Byte>();
 		loopStarts = new LinkedList<Integer>(); // [ text ], mark the
 		// First bracket on spotting it, to speed up returning to the start of a
@@ -43,7 +41,7 @@ public class BrainfuckLight {
 	public BrainfuckLight(String programText) {
 		this.programText = new StringBuffer(programText);
 		programSize = programText.length();
-		inputStream = new StringBuffer(20);
+		world = new InputOutput();
 		programStack = new LinkedList<Byte>();
 		loopStarts = new LinkedList<Integer>(); // [ text ], mark the
 		// First bracket on spotting it, to speed up returning to the start of a
@@ -53,34 +51,11 @@ public class BrainfuckLight {
 	// TODO: Constructors for interpreter memory and combined text-memory
 
 	/**
-	 * Read one byte input.
-	 */
-	public Byte read() {
-		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-		byte value = 0;
-		try {
-			System.out.print('>'); // This is assuming each char of input is on
-									// a separate line
-			value = (byte) (br.read());
-			System.out.print('\n');
-		} catch (IOException e) {
-
-			e.printStackTrace();
-		}
-		return value;
-	}
-
-	/**
-	 * Print one byte to output.
-	 */
-	public void print(Byte value) {
-		System.out.println(value);
-	}
-
-	/**
 	 * Run the program.
+	 * 
+	 * @throws IOException
 	 */
-	public void run() {
+	public void run() throws IOException {
 		int i = 0; // Temp variable
 
 		while (programPointer < programSize)
@@ -108,6 +83,7 @@ public class BrainfuckLight {
 
 				case '<': // Decrement stackPointer
 					stackPointer--;
+
 					break;
 
 				case '[': // Loop start
@@ -143,13 +119,11 @@ public class BrainfuckLight {
 					break;
 
 				case ',': // Input
-					i = read();
-					programStack.set(stackPointer, (byte) i);
+					world.read();
 					break;
 
 				case '.': // Output
-					i = programStack.get(stackPointer);
-					print((byte) i);
+					world.print(programStack.get(stackPointer));
 					break;
 				}
 

@@ -19,7 +19,6 @@ public class FuckedBrainInterface {
 		window.dispose();
 		if (result == JFileChooser.APPROVE_OPTION) {
 			File selectedFile = fileChooser.getSelectedFile();
-			System.out.println("Starting program.");
 			run(selectedFile);
 		}
 	}
