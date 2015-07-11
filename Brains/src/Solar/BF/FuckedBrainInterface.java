@@ -32,10 +32,20 @@ public class FuckedBrainInterface {
 	 */
 	static void run(File program) throws IOException {
 		String code = "";
+		long start = 0; // Timing diagnostics
+		long end = 0;
+
+		// Entire program needs to be available for use:
 		code = new String(Files.readAllBytes(program.toPath()));
+		// This could be an interpreter, or running a compiler:
 		BrainfuckSimple interpreter = new BrainfuckSimple(code);
 		System.out.println(code);
-		interpreter.run();
 
+		start = System.currentTimeMillis();
+		interpreter.run();
+		end = System.currentTimeMillis();
+
+		System.out.println("\n\n>>Program used " + ((float) (end - start))
+				/ 1000 + "s.");
 	}
 }
