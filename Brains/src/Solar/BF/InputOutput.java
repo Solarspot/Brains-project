@@ -23,7 +23,7 @@ public class InputOutput {
 	public byte read() throws IOException {
 		int buffered = input.length();
 
-		System.out.println(">");
+		System.out.print(">");
 		// Infinite loop, if input stays empty.
 		while (buffered == 0) {
 			input.append(read.readLine());

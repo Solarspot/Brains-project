@@ -11,13 +11,13 @@ import java.util.LinkedList;
  * added to whatever it currently has.
  */
 public class BrainfuckLight {
-	StringBuffer programText; // Brainfuck source code
+	private StringBuffer programText; // Brainfuck source code
 	private int programPointer;
 	private int programSize;
 	private InputOutput world;
-	LinkedList<Byte> programStack; // Working data of program
+	private LinkedList<Byte> programStack; // Working data of program
 	private int stackPointer;
-	LinkedList<Integer> loopStarts; // [ text ], mark the
+	private LinkedList<Block> loops; // [ text ], mark the
 
 	// First bracket on spotting it, to speed up returning to the start of
 	// loops.
@@ -30,7 +30,7 @@ public class BrainfuckLight {
 		programSize = 0;
 		world = new InputOutput();
 		programStack = new LinkedList<Byte>();
-		loopStarts = new LinkedList<Integer>(); // [ text ], mark the
+		loops = new LinkedList<Block>(); // [ text ], mark the
 		// First bracket on spotting it, to speed up returning to the start of a
 		// loop.
 	}
@@ -43,7 +43,7 @@ public class BrainfuckLight {
 		programSize = programText.length();
 		world = new InputOutput();
 		programStack = new LinkedList<Byte>();
-		loopStarts = new LinkedList<Integer>(); // [ text ], mark the
+		loops = new LinkedList<Block>(); // [ text ], mark the
 		// First bracket on spotting it, to speed up returning to the start of a
 		// loop.
 	}
@@ -56,34 +56,36 @@ public class BrainfuckLight {
 	 * @throws IOException
 	 */
 	public void run() throws IOException {
-		int i = 0; // Temp variable
+		int cell = 0; // Current memory
 
 		while (programPointer < programSize)
 			herp: {
+				cell = programStack.get(stackPointer);
+
 				switch (programText.charAt(programPointer)) {
 
 				case '+': // Increment operator
-					i = programStack.get(stackPointer);
-					programStack.set(stackPointer, (byte) (i + 1));
+					programStack.set(stackPointer, (byte) (cell + 1));
 					break;
 
 				case '-': // Decrement operator
-					i = programStack.get(stackPointer);
-					programStack.set(stackPointer, (byte) (i - 1));
+					programStack.set(stackPointer, (byte) (cell - 1));
 					break;
 
 				case '>': // Increment stackPointer
 					stackPointer++;
 					// Expand stack, if program has indexed off existing stack:
-					i = programStack.size();
-					if (i < stackPointer) {
+					if (programStack.size() < stackPointer) {
 						programStack.push((byte) 0);
 					}
 					break;
 
 				case '<': // Decrement stackPointer
 					stackPointer--;
-
+					if (stackPointer < 0) {
+						System.err
+								.println("Error!  Gone off the deep end!  Negative memory address.");
+					}
 					break;
 
 				case '[': // Loop start
@@ -94,13 +96,12 @@ public class BrainfuckLight {
 					 * corresponding ']' is found; resume execution there.
 					 */
 
-					i = programStack.get(stackPointer);
-					if (i != 0) {
-						loopStarts.push(programPointer);
+					if (cell != 0) {
+
 					} else {
-						i = programPointer;
-						while (programText.charAt(i) != ']') {
-							i++;
+						cell = programPointer;
+						while (programText.charAt(cell) != ']') {
+							cell++;
 							/*
 							 * if (i >= programSize) { System.out.println(
 							 * "Unbalanced brackets; ending execution.");
@@ -113,13 +114,13 @@ public class BrainfuckLight {
 					break;
 
 				case ']': // Loop end
-					if (programStack.get(stackPointer) == 0) {
+					if (cell == 0) {
 
 					}
 					break;
 
 				case ',': // Input
-					world.read();
+					programStack.set(stackPointer, world.read());
 					break;
 
 				case '.': // Output
@@ -132,7 +133,25 @@ public class BrainfuckLight {
 
 	}
 
+	/**
+	 * Find the corresponding closing bracket
+	 * 
+	 * @return
+	 */
+	private void openBracket() {
+
+	}
+
 	public static class UnblancedLoopException extends java.lang.Exception {
 		private static final long serialVersionUID = 1L;
+	}
+
+	/**
+	 * Markers for block delimiters. -1 is used as an impossible sentinel value.
+	 *
+	 */
+	private class Block {
+		int beginning = -1;
+		int end = -1;
 	}
 }
