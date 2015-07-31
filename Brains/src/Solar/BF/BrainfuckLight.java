@@ -1,6 +1,7 @@
 package Solar.BF;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.LinkedList;
 
 /**
@@ -15,9 +16,10 @@ public class BrainfuckLight {
 	private int programPointer;
 	private int programSize;
 	private InputOutput world;
-	private LinkedList<Byte> programStack; // Working data of program
+	private LinkedList<Byte> tape; // Working data of program
 	private int stackPointer;
-	private LinkedList<Block> loops; // [ text ], mark the
+	private ArrayList<Block> loops; // Root of tree of blocks.
+	private int furthestScanned;
 
 	// First bracket on spotting it, to speed up returning to the start of
 	// loops.
@@ -28,11 +30,14 @@ public class BrainfuckLight {
 	public BrainfuckLight() {
 		programText = new StringBuffer(50);
 		programSize = 0;
+		programPointer = 0;
+		stackPointer = 0;
+		furthestScanned = 0;
 		world = new InputOutput();
-		programStack = new LinkedList<Byte>();
-		loops = new LinkedList<Block>(); // [ text ], mark the
-		// First bracket on spotting it, to speed up returning to the start of a
-		// loop.
+		tape = new LinkedList<Byte>();
+		loops = new ArrayList<Block>(); // Mark block beginnings and endings to
+										// speed up
+		// traversals
 	}
 
 	/**
@@ -41,11 +46,14 @@ public class BrainfuckLight {
 	public BrainfuckLight(String programText) {
 		this.programText = new StringBuffer(programText);
 		programSize = programText.length();
+		programPointer = 0;
+		stackPointer = 0;
+		furthestScanned = 0;
 		world = new InputOutput();
-		programStack = new LinkedList<Byte>();
-		loops = new LinkedList<Block>(); // [ text ], mark the
-		// First bracket on spotting it, to speed up returning to the start of a
-		// loop.
+		tape = new LinkedList<Byte>();
+		loops = new ArrayList<Block>(); // Mark block beginnings and endings to
+										// speed up
+		// traversals
 	}
 
 	// TODO: Constructors for interpreter memory and combined text-memory
@@ -60,27 +68,29 @@ public class BrainfuckLight {
 
 		while (programPointer < programSize)
 			herp: {
-				cell = programStack.get(stackPointer);
+				cell = tape.get(stackPointer);
 
 				switch (programText.charAt(programPointer)) {
 
 				case '+': // Increment operator
-					programStack.set(stackPointer, (byte) (cell + 1));
+					tape.set(stackPointer, (byte) (cell + 1));
 					break;
 
 				case '-': // Decrement operator
-					programStack.set(stackPointer, (byte) (cell - 1));
+					tape.set(stackPointer, (byte) (cell - 1));
 					break;
 
 				case '>': // Increment stackPointer
+					tape.set(stackPointer, (byte) (cell));
 					stackPointer++;
 					// Expand stack, if program has indexed off existing stack:
-					if (programStack.size() < stackPointer) {
-						programStack.push((byte) 0);
+					if (tape.size() < stackPointer) {
+						tape.push((byte) 0);
 					}
 					break;
 
 				case '<': // Decrement stackPointer
+					tape.set(stackPointer, (byte) (cell));
 					stackPointer--;
 					if (stackPointer < 0) {
 						System.err
@@ -89,28 +99,7 @@ public class BrainfuckLight {
 					break;
 
 				case '[': // Loop start
-					/*
-					 * If the value under stackPointer is non-zero, push
-					 * programPointer to loopStarts, and continue execution. If
-					 * zero, skip execution of all commands until the
-					 * corresponding ']' is found; resume execution there.
-					 */
-
-					if (cell != 0) {
-
-					} else {
-						cell = programPointer;
-						while (programText.charAt(cell) != ']') {
-							cell++;
-							/*
-							 * if (i >= programSize) { System.out.println(
-							 * "Unbalanced brackets; ending execution.");
-							 * ErrorLog.addError(
-							 * "BF-l encountered unbalanced loop brackets.");
-							 * break herp; }
-							 */
-						}
-					}
+					openBracket(cell);
 					break;
 
 				case ']': // Loop end
@@ -120,11 +109,11 @@ public class BrainfuckLight {
 					break;
 
 				case ',': // Input
-					programStack.set(stackPointer, world.read());
+					tape.set(stackPointer, world.read());
 					break;
 
 				case '.': // Output
-					world.print(programStack.get(stackPointer));
+					world.print((byte) cell);
 					break;
 				}
 
@@ -134,24 +123,34 @@ public class BrainfuckLight {
 	}
 
 	/**
-	 * Find the corresponding closing bracket
+	 * Implement loop beginnings.
 	 * 
 	 * @return
 	 */
-	private void openBracket() {
-
+	private void openBracket(int cell) {
+		if (programPointer > furthestScanned) {
+			// Add new block
+		} else if (cell == 0) {
+			// Goto corresponding ']' and possibly scan further for new blocks.
+		}
+		// else enter the block, with the next instruction. run() does this
+		// already.
 	}
+
+	/**
+	 * Scan this block, and add it and child blocks to the parent block.
+	 */
 
 	public static class UnblancedLoopException extends java.lang.Exception {
 		private static final long serialVersionUID = 1L;
 	}
 
 	/**
-	 * Markers for block delimiters. -1 is used as an impossible sentinel value.
-	 *
+	 * Unit of control flow, including child Blocks.
 	 */
-	private class Block {
+	private static class Block {
 		int beginning = -1;
 		int end = -1;
+		ArrayList<Block> children = new ArrayList<Block>();
 	}
 }
