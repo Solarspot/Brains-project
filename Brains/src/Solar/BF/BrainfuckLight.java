@@ -18,7 +18,7 @@ public class BrainfuckLight {
 	private InputOutput world;
 	private LinkedList<Byte> tape; // Working data of program
 	private int stackPointer;
-	private ArrayList<Block> loops; // Root of tree of blocks.
+	private ControlFlowPartial graph; // Root of tree of blocks.
 	private int furthestScanned;
 
 	// First bracket on spotting it, to speed up returning to the start of
@@ -35,8 +35,9 @@ public class BrainfuckLight {
 		furthestScanned = 0;
 		world = new InputOutput();
 		tape = new LinkedList<Byte>();
-		loops = new ArrayList<Block>(); // Mark block beginnings and endings to
-										// speed up
+		graph = new ControlFlowPartial(programText); // Mark block beginnings
+														// and endings to
+		// speed up
 		// traversals
 	}
 
@@ -51,9 +52,10 @@ public class BrainfuckLight {
 		furthestScanned = 0;
 		world = new InputOutput();
 		tape = new LinkedList<Byte>();
-		loops = new ArrayList<Block>(); // Mark block beginnings and endings to
-										// speed up
-		// traversals
+		graph = new ControlFlowPartial(this.programText); // Mark block
+															// beginnings and
+															// endings to
+		// speed up traversals
 	}
 
 	// TODO: Constructors for interpreter memory and combined text-memory
@@ -128,8 +130,9 @@ public class BrainfuckLight {
 	 * @return
 	 */
 	private void openBracket(int cell) {
+		// Haven't seen this one yet, add new block
 		if (programPointer > furthestScanned) {
-			// Add new block
+			graph.openBracket(programPointer, cell);
 		} else if (cell == 0) {
 			// Goto corresponding ']' and possibly scan further for new blocks.
 		}

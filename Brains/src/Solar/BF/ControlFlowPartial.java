@@ -8,17 +8,24 @@ import java.util.ArrayList;
  * may be only partially scanned, in which case scannedTo != programSize.
  */
 public class ControlFlowPartial {
-	private ArrayList<Block> topLevelLoops;
 	private int scannedTo;
 	private int programSize;
 	private StringBuffer programText;
 	private Block currentBlock;
+	private Block root;
 
 	public ControlFlowPartial(StringBuffer programText) {
-		topLevelLoops = new ArrayList<Block>();
 		scannedTo = 0;
 		this.programSize = programText.length();
 		this.programText = programText;
+		// Using a dummy block to contain the entire program.
+		root = new Block();
+		/*
+		 * Overrides null with something non-null. root has a flag to check to
+		 * avoid following this.
+		 */
+		root.parent = root;
+		currentBlock = root; // So we have somewhere to start.
 	}
 
 	/**
@@ -31,6 +38,7 @@ public class ControlFlowPartial {
 		Block parent;
 		int index;
 		ArrayList<Block> children;
+		boolean root; // This should never change post-construction.
 
 		/**
 		 * Constructor for a single control flow block.
@@ -39,22 +47,29 @@ public class ControlFlowPartial {
 		 *            Index of opening '[' of some loop, this constructor
 		 *            assumes the corresponding ']' has not been spotted.
 		 * @param parent
-		 *            The parent Block of this one. Set to null for a top-level
-		 *            block.
+		 *            The parent Block of this one.
 		 */
 		public Block(int beginning, Block parent) {
 			this.beginning = beginning;
 			end = -1; // Sentinel value, must be non-negative before use.
 			this.parent = parent;
 			children = new ArrayList<Block>();
+			root = false;
+		}
 
+		/**
+		 * Constructor for zero-value of Block. Used to represent root of tree.
+		 */
+		public Block() {
+			beginning = 0;
+			end = programSize - 1;
+			parent = null;
+			children = new ArrayList<Block>();
+			root = true;
 		}
 	}
 
-	public int openBracket(int programCounter, int cell) {
-		// We're at least this far, if we're being called with this.
-		scannedTo = programCounter;
-
+	public void foundBlock(int programCounter) {
 		/*
 		 * We need to have the block ready, whether we're entering it or
 		 * skipping it.
@@ -68,28 +83,26 @@ public class ControlFlowPartial {
 			currentBlock = new Block(programCounter, parent);
 			parent.children.add(currentBlock);
 			currentBlock.index = parent.children.size();
+
+			// We've now scanned up to this character.
+			scannedTo = programCounter;
 		}
-		if (cell == 0) {
-			// We must goto the corresponding ']' character.
-		} else if (currentBlock.beginning != programCounter
-				&& currentBlock.parent != null) {
-			// We're entering the block, set it to current.
-			ArrayList<Block> others = currentBlock.parent.children;
-			/*
-			 * We may assume that if we're not going up a level, not at top
-			 * level, the next block has already been scanned and added to
-			 * parent.children
-			 */
-			currentBlock = others.get(currentBlock.index + 1);
-		} else if (currentBlock.parent == null
-				&& currentBlock.beginning != programCounter) {
-			// Same as above, but special-cased for top level loops.
-			int i = currentBlock.index;
 
-		}
-		return programCounter;
+		/*
+		 * Moving programCounter into the block if cell != 0, or skipping it if
+		 * cell == 0, is not our responsibility.
+		 */
 
-		// Moving programCounter into the block is not our responsibility
+	}
 
+	/**
+	 * Skips this block.
+	 * 
+	 * @param programCounter
+	 *            the index of the block to skip.
+	 */
+	public int skipBlock(int programCounter) {
+
+		return 0;
 	}
 }
