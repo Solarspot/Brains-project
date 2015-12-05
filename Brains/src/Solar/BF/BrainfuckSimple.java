@@ -5,14 +5,14 @@ import java.io.IOException;
 public class BrainfuckSimple {
 
 	private String programText;
-	private InputOutput world;
+	private MockIO world;
 	private byte[] memory;
 	private int address;
 	private int command;
 
-	public BrainfuckSimple(String programText) {
+	public BrainfuckSimple(String programText, MockIO world) {
 		this.programText = programText; // BF source code.
-		world = new InputOutput();
+		this.world = world;
 		// Minimum allowable memory size is 30k cells of 8 bits.
 		memory = new byte[30000];
 		// Programs start with nothing. Nothing I tell you.

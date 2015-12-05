@@ -37,15 +37,15 @@ public class FuckedBrainInterface {
 
 		// Entire program needs to be available for use:
 		code = new String(Files.readAllBytes(program.toPath()));
+		InputOutput world = new InputOutput();
 		// This could be an interpreter, or running a compiler:
-		BrainfuckSimple interpreter = new BrainfuckSimple(code);
+		BrainfuckSimple interpreter = new BrainfuckSimple(code, world);
 		System.out.println(code);
 
 		start = System.currentTimeMillis();
 		interpreter.run();
 		end = System.currentTimeMillis();
 
-		System.out.println("\n\n>>Program used " + ((float) (end - start))
-				/ 1000 + "s.");
+		System.out.println("\n\n>>Program used " + ((float) (end - start)) / 1000 + "s.");
 	}
 }

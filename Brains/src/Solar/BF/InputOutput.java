@@ -4,7 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
-public class InputOutput {
+public class InputOutput implements MockIO {
 	private StringBuffer input;
 	public BufferedReader read;
 
