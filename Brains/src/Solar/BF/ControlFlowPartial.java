@@ -1,6 +1,7 @@
 package Solar.BF;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 
 /**
  * This represents the control flow graph of a program. Top level loops are
@@ -13,6 +14,7 @@ public class ControlFlowPartial {
 	private StringBuffer programText;
 	private Block currentBlock;
 	private Block root;
+	private LinkedList<Integer> indexStack;
 
 	public ControlFlowPartial(StringBuffer programText) {
 		scannedTo = 0;
@@ -26,6 +28,9 @@ public class ControlFlowPartial {
 		 */
 		root.parent = root;
 		currentBlock = root; // So we have somewhere to start.
+		// The last block's index seen in currentBlock.
+		indexStack = new LinkedList<Integer>();
+		indexStack.push(-1); // Dummy, will be zero on seeing child block at 0.
 	}
 
 	/**
@@ -36,7 +41,7 @@ public class ControlFlowPartial {
 		int beginning;
 		int end;
 		Block parent;
-		int index;
+		int indexInParent;
 		ArrayList<Block> children;
 		boolean root; // This should never change post-construction.
 
@@ -82,12 +87,38 @@ public class ControlFlowPartial {
 			 */
 			currentBlock = new Block(programCounter, parent);
 			parent.children.add(currentBlock);
-			currentBlock.index = parent.children.size();
+			currentBlock.indexInParent = parent.children.size();
 
 			// We've now scanned up to this character.
 			scannedTo = programCounter;
+		} else {
+			int childIndex = 0;
+			Block parent = currentBlock;
+			Block child;
+			/*
+			 * programCounter is already pointing at this block, set it as
+			 * current. Also, skipBlock assumes it's skipping the currentBlock.
+			 */
+			childIndex = indexStack.pop();
+			childIndex++;
+			indexStack.push(childIndex);
+			child = parent.children.get(childIndex);
+			// Sanity check: Only way we should ever get here, to an already
+			// Found block, is if beginning is the start of the block following
+			// last.
+			if (child.beginning == programCounter) {
+				currentBlock = child;
+			} else {
+				// World is burning, all hope is lost, we have a bug.
+				throw new RuntimeException();
+			}
 		}
-
+		/*
+		 * Do we really want to set a block to current / add it to indexStack if
+		 * programCounter isn't in it yet, and we'll need indexStack's previous
+		 * Top to leave this...
+		 */
+		indexStack.push(-1);
 		/*
 		 * Moving programCounter into the block if cell != 0, or skipping it if
 		 * cell == 0, is not our responsibility.
@@ -96,13 +127,42 @@ public class ControlFlowPartial {
 	}
 
 	/**
-	 * Skips this block.
+	 * Skips this block. Assumes the block is also currentBlock
 	 * 
 	 * @param programCounter
-	 *            the index of the block to skip.
+	 *            the source index of the block to skip.
 	 */
 	public int skipBlock(int programCounter) {
 
-		return 0;
+		if (currentBlock.beginning == programCounter) {
+			// Block must be scanned before exiting.
+			if (currentBlock.end == -1) {
+				// TODO scan block's contents.
+			}
+			// Exit block.
+			return leaveBlock();
+		} else {
+			throw new RuntimeException();
+		}
+	}
+
+	/**
+	 * Leaves the current block. Returns programCounter after leaving.
+	 */
+	public int leaveBlock() {
+		Block parent = currentBlock.parent;
+		int end = currentBlock.end;
+		currentBlock = parent;
+		indexStack.pop();
+		return end;
+	}
+
+	/**
+	 * Repeats current block. Returns beginning of block's programCounter.
+	 */
+	public int repeatBlock() {
+		indexStack.pop(); // Repeating implies redoing all child blocks.
+		indexStack.push(-1);
+		return currentBlock.beginning;
 	}
 }
